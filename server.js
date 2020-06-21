@@ -20,6 +20,7 @@ app.use(cors());
 
 app.get('/location', (request, response) => {
   let data = require('./data/location.json');
+  console.log(request);
   let actualData = new Location(data[0], request.query.city);
   
   response.status(200).json(actualData);
@@ -27,7 +28,7 @@ app.get('/location', (request, response) => {
 
 
 app.get('/weather', (request, response) => {
-  let weatherData = require('./data/weather.json').data;
+  let weatherData = require('./data/weather.json');
 
   let output = []; // stores data in array and loops through contents weather.json object constructor
   weatherData.forEach(data => {
