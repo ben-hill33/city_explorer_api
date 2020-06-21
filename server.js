@@ -28,13 +28,14 @@ app.get('/location', (request, response) => {
 
 
 app.get('/weather', (request, response) => {
-  let weatherData = require('./data/weather.json');
+  let weatherData = require('./data/weather.json').data;
 
-  let output = []; // stores data in array and loops through contents weather.json object constructor
+  let output = [];
   weatherData.forEach(data => {
     let dayObject = new Weather(data.weather.description, data.datetime);
     output.push(dayObject);
   })
+  console.log(output);
   response.status(200).json(output)
 });
 
@@ -47,9 +48,9 @@ function Location(obj, query) {
 
 }
 
-function Weather(obj) {
-  this.forecast = obj.weather.description;
-  this.time = obj.datetime;
+function Weather(forecast, time) {
+  this.forecast = forecast;
+  this.time = new Date(time).toDateString();
   
 }
 
