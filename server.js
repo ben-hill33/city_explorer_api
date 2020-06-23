@@ -29,7 +29,7 @@ app.get('/location', (request, response) => {
 
 app.get('/weather', (request, response) => {
   let weatherData = require('./data/weather.json').data;
-
+  
   let output = [];
   weatherData.forEach(data => {
     let dayObject = new Weather(data.weather.description, data.datetime);
