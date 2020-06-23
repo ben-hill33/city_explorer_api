@@ -32,8 +32,8 @@ app.get('/location', (request, response) => {
   const API = `https://us1.locationiq.com/v1/search.php?key=${process.env.GEOCODE}&q=${request.query.city}&format=json`;
   superagent.get(API)
     .then(data => {
-
-      let actualData = new Location(data[0], request.query.city);
+      console.log(data.body[0]);
+      let actualData = new Location(data.body[0], request.query.city);
       
       response.status(200).json(actualData);
     })
