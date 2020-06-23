@@ -7,6 +7,8 @@ const express = require('express');
 // this creates an instance of express as our "app"
 const app = express();
 
+const superagent = require('superagent');
+
 const cors = require('cors');
 
 // .env file renders here
@@ -18,14 +20,27 @@ app.use(cors());
 
 
 
-app.get('/location', (request, response) => {
-  let data = require('./data/location.json');
-  console.log(request);
-  let actualData = new Location(data[0], request.query.city);
+// app.get('/location', (request, response) => {
+//   let data = require('./data/location.json');
+//   console.log(request);
+//   let actualData = new Location(data[0], request.query.city);
   
-  response.status(200).json(actualData);
-});
+//   response.status(200).json(actualData);
+// });
 
+app.get('/location', (request, response) => {
+  const API = `https://us1.locationiq.com/v1/search.php?key=${process.env.GEOCODE}&q=${request.query.city}&format=json`;
+  superagent.get(API)
+    .then(data => {
+
+      let actualData = new Location(data[0], request.query.city);
+      
+      response.status(200).json(actualData);
+    })
+    .catch( function(){
+      response.status(500).send('Something went wrong with your search selection')
+    })
+});
 
 app.get('/weather', (request, response) => {
   let weatherData = require('./data/weather.json').data;
@@ -40,8 +55,8 @@ app.get('/weather', (request, response) => {
 });
 
 
-function Location(obj, query) {
-  this.search_query = query;
+function Location(obj, city) {
+  this.search_query = city;
   this.formatted_query = obj.display_name;
   this.latitude = obj.lat;
   this.longitude = obj.lon;
