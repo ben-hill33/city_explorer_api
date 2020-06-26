@@ -1,85 +1,139 @@
 'use strict';
 
-// dotenv, express, cors
+// Loads Environment Variables from .env
 require('dotenv').config();
 
+// NPM Dependencies
 const express = require('express');
-// this creates an instance of express as our "app"
-const app = express();
-
+const cors = require('cors');
 const superagent = require('superagent');
 
-const cors = require('cors');
-
-// .env file renders here
+// Dependency usage
+const app = express();
 const PORT = process.env.PORT || 3000;
-
-
-
 app.use(cors());
 
+// API route methods
+app.get('/', handleHomePage);
+app.get('/location', locationHandler);
+app.get('/weather', weatherHandler);
+app.get('/trails', hikingHandler);
+
+// Initializes environment
+app.listen(PORT, () => console.log('Server is running on port', PORT));
 
 
-// app.get('/location', (request, response) => {
-//   let data = require('./data/location.json');
-//   console.log(request);
-//   let actualData = new Location(data[0], request.query.city);
-  
-//   response.status(200).json(actualData);
-// });
+// Memory Cache
+let locations = {};
 
-app.get('/location', (request, response) => {
-  const API = `https://us1.locationiq.com/v1/search.php?key=${process.env.GEOCODE}&q=${request.query.city}&format=json`;
+// Home page
+function handleHomePage(request, response) {
+  response.send('Hello World times two. Initial Route');
+}
+
+function locationHandler(request, response) {
+  if (locations[request.query.city]){
+    response.status(200).send(locations[request.query.city]);
+  } else {locationAPIHandler(request.query.city, response);
+  }
+}
+
+
+// location API environment
+function locationAPIHandler(city, response) {
+  // const city = request.query.city;
+  const API = 'https://us1.locationiq.com/v1/search.php';
+
+  let queryObject = {
+    key: process.env.GEOCODE,
+    q: city,
+    format: 'json'
+  };
+
   superagent.get(API)
-    .then(data => {
-      console.log(data.body[0]);
-      let actualData = new Location(data.body[0], request.query.city);
-      
-      response.status(200).json(actualData);
+    .query(queryObject)
+    .then(data => { 
+      let locationData = new Location(data.body[0], city);
+      response.status(200).send(locationData);
     })
     .catch( function(){
-      response.status(500).send('Something went wrong with your search selection')
+      response.status(500).send('Something went wrong with Location Data')
     })
-});
-
-app.get('/weather', (request, response) => {
-  let weatherData = require('./data/weather.json').data;
-  
-  let output = [];
-  weatherData.forEach(data => {
-    let dayObject = new Weather(data.weather.description, data.datetime);
-    output.push(dayObject);
-  })
-  console.log(output);
-  response.status(200).json(output)
-});
-
+}
 
 function Location(obj, city) {
   this.search_query = city;
   this.formatted_query = obj.display_name;
   this.latitude = obj.lat;
   this.longitude = obj.lon;
+}
 
+
+// weather API environment
+function weatherHandler(request, response) {
+  const API = 'http://api.weatherbit.io/v2.0/history/daily';
+  
+  let queryObject = {
+    lat: request.query.latitude,
+    lon: request.query.longitude,
+    key: process.env.WEATHER_API_KEY
+  };
+
+  superagent.get(API)
+  .query(queryObject)
+  .then(data => {
+    let dailyWeather = data.body.data;
+    let dailyForecast = dailyWeather.map((day) => new Weather(day));
+    response.status(200).send(dailyForecast);
+  })
+  .catch( function(){
+    response.status(500).send('Something went wrong with Weather Data');
+  })
 }
 
 function Weather(forecast, time) {
   this.forecast = forecast;
   this.time = new Date(time).toDateString();
-  
 }
+
+function hikingHandler(request, response) {
+  const API = 'https://www.hikingproject.com/data/get-trails';
+
+  let queryObject = {
+    lat: request.query.latitude,
+    lon: request.query.longitude,
+    key: process.env.TRAIL_API_KEY
+  };
+
+  superagent.get(API)
+  .query(queryObject)
+  .then(data => {
+    let hikingData = data.body.trails;
+    let 
+  })
+}
+
+// Trails API environment
+function Hiking(obj) {
+  this.name = obj.name;
+  this.location = obj.location;
+  this.length = obj.length;
+  this.stars = obj.starts;
+  this.star_votes = obj.starVotes;
+  this.summary = obj.summary;
+  this.trail_url = obj.url;
+  this.conditions = obj.conditionDetails;
+  this.condition_date = obj.conditionDate;
+  this.condition_time = obj.conditionTime;
+}
+
+
 
 app.use('*', (request, response) => {
   response.status(404).send('You broke something.. Good job.');
 });
 
-app.use((error, request, response, next) => {
-  console.log(error);
-  response.status(500).send('server is broken');
-});
 
-
-app.listen(PORT, () => console.log('Server is running on port', PORT));
 
 
 
