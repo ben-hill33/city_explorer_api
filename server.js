@@ -109,7 +109,11 @@ function hikingHandler(request, response) {
   .query(queryObject)
   .then(data => {
     let hikingData = data.body.trails;
-    let 
+    let trailData = hikingData.map((hike) => new Hiking(hike));
+    response.status(200).send(trailData);
+  })
+  .catch( function(){
+    response.status(500).send('Something went wrong with Hiking Data');
   })
 }
 
@@ -118,13 +122,13 @@ function Hiking(obj) {
   this.name = obj.name;
   this.location = obj.location;
   this.length = obj.length;
-  this.stars = obj.starts;
+  this.stars = obj.stars;
   this.star_votes = obj.starVotes;
   this.summary = obj.summary;
   this.trail_url = obj.url;
   this.conditions = obj.conditionDetails;
-  this.condition_date = obj.conditionDate;
-  this.condition_time = obj.conditionTime;
+  this.condition_date = new Date(obj.conditionDate.slice(0,10)).toDateString();
+  this.condition_time = obj.conditionDate.slice(11,19);
 }
 
 
