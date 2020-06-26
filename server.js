@@ -7,8 +7,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
+const pg = require('pg');
 
 // Dependency usage
+const client = new pg.Client(process.env.DATABASE_URL);
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors());
@@ -21,6 +23,11 @@ app.get('/trails', hikingHandler);
 
 // Initializes environment
 app.listen(PORT, () => console.log('Server is running on port', PORT));
+
+// check to see if client is connected
+client.connect()
+  .then(() => console.log('yes'))
+  .catch(error => console.error('badness', error));
 
 
 // Memory Cache
@@ -74,17 +81,20 @@ function weatherHandler(request, response) {
   const API = 'http://api.weatherbit.io/v2.0/history/daily';
   
   let queryObject = {
+    key: process.env.WEATHER_API_KEY,
     lat: request.query.latitude,
     lon: request.query.longitude,
-    key: process.env.WEATHER_API_KEY
+    format: 'json'
   };
 
   superagent.get(API)
   .query(queryObject)
   .then(data => {
-    let dailyWeather = data.body.data;
-    let dailyForecast = dailyWeather.map((day) => new Weather(day));
-    response.status(200).send(dailyForecast);
+    let dailyWeather = data.body.data.map(obj => {
+      return new Weather(obj.data.description, obj,datetime);
+    });
+    
+    response.status(200).json(dailyWeather);
   })
   .catch( function(){
     response.status(500).send('Something went wrong with Weather Data');
@@ -109,7 +119,11 @@ function hikingHandler(request, response) {
   .query(queryObject)
   .then(data => {
     let hikingData = data.body.trails;
-    let 
+    let trailData = hikingData.map((hike) => new Hiking(hike));
+    response.status(200).send(trailData);
+  })
+  .catch( function(){
+    response.status(500).send('Something went wrong with Hiking Data');
   })
 }
 
@@ -118,13 +132,13 @@ function Hiking(obj) {
   this.name = obj.name;
   this.location = obj.location;
   this.length = obj.length;
-  this.stars = obj.starts;
+  this.stars = obj.stars;
   this.star_votes = obj.starVotes;
   this.summary = obj.summary;
   this.trail_url = obj.url;
   this.conditions = obj.conditionDetails;
-  this.condition_date = obj.conditionDate;
-  this.condition_time = obj.conditionTime;
+  this.condition_date = new Date(obj.conditionDate.slice(0,10)).toDateString();
+  this.condition_time = obj.conditionDate.slice(11,19);
 }
 
 
