@@ -74,9 +74,10 @@ function weatherHandler(request, response) {
   const API = 'http://api.weatherbit.io/v2.0/history/daily';
   
   let queryObject = {
+    key: process.env.WEATHER_API_KEY,
     lat: request.query.latitude,
     lon: request.query.longitude,
-    key: process.env.WEATHER_API_KEY
+    format: 'json'
   };
 
   superagent.get(API)
@@ -86,7 +87,7 @@ function weatherHandler(request, response) {
       return new Weather(obj.data.description, obj,datetime);
     });
     
-    response.status(200).send(dailyWeather);
+    response.status(200).json(dailyWeather);
   })
   .catch( function(){
     response.status(500).send('Something went wrong with Weather Data');
