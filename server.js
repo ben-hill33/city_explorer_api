@@ -7,8 +7,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
+const pg = require('pg');
 
 // Dependency usage
+const client = new pg.Client(process.env.DATABASE_URL);
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors());
@@ -21,6 +23,11 @@ app.get('/trails', hikingHandler);
 
 // Initializes environment
 app.listen(PORT, () => console.log('Server is running on port', PORT));
+
+// check to see if client is connected
+client.connect()
+  .then(() => console.log('yes'))
+  .catch(error => console.error('badness', error));
 
 
 // Memory Cache
