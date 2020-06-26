@@ -82,9 +82,11 @@ function weatherHandler(request, response) {
   superagent.get(API)
   .query(queryObject)
   .then(data => {
-    let dailyWeather = data.body.data;
-    let dailyForecast = dailyWeather.map((day) => new Weather(day));
-    response.status(200).send(dailyForecast);
+    let dailyWeather = data.body.data.map(obj => {
+      return new Weather(obj.data.description, obj,datetime);
+    });
+    
+    response.status(200).send(dailyWeather);
   })
   .catch( function(){
     response.status(500).send('Something went wrong with Weather Data');
