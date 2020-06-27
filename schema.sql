@@ -1,10 +1,11 @@
 -- assume we have a db created
 -- automate the stuff in the cli
 
-DROP TABLE IF EXISTS users;
-
-CREATE table users (
+DROP TABLE IF EXISTS locations;
+CREATE TABLE locations (
   id SERIAL PRIMARY KEY,
-  first_name VARCHAR(255),
-  last_name VARCHAR(255)
-)
+  formatted_query VARCHAR(255),
+  latitude NUMERIC,
+  longitude NUMERIC,
+  search_query VARCHAR(255) 
+);

@@ -25,9 +25,9 @@ app.get('/trails', hikingHandler);
 app.listen(PORT, () => console.log('Server is running on port', PORT));
 
 // check to see if client is connected
-client.connect()
-  .then(() => console.log('yes'))
-  .catch(error => console.error('badness', error));
+// client.connect()
+//   .then(() => console.log('yes'))
+//   .catch(error => console.error('badness', error));
 
 
 // Memory Cache
@@ -78,32 +78,32 @@ function Location(obj, city) {
 
 // weather API environment
 function weatherHandler(request, response) {
-  const API = 'http://api.weatherbit.io/v2.0/history/daily';
+  const API = 'https://api.weatherbit.io/v2.0/forecast/daily';
   
   let queryObject = {
     key: process.env.WEATHER_API_KEY,
     lat: request.query.latitude,
     lon: request.query.longitude,
-    format: 'json'
+    // format: 'json'
   };
 
   superagent.get(API)
   .query(queryObject)
-  .then(data => {
-    let dailyWeather = data.body.data.map(obj => {
-      return new Weather(obj.data.description, obj,datetime);
+  .then(apiData => {
+    let dailyWeather = apiData.body.data.map(obj => {
+      return new Weather(obj);
     });
     
-    response.status(200).json(dailyWeather);
+    response.status(200).send(dailyWeather);
   })
   .catch( function(){
     response.status(500).send('Something went wrong with Weather Data');
-  })
+  });
 }
 
-function Weather(forecast, time) {
-  this.forecast = forecast;
-  this.time = new Date(time).toDateString();
+function Weather(forecast) {
+  this.forecast = forecast.weather.description;
+  this.time = new Date(forecast.datetime).toDateString();
 }
 
 function hikingHandler(request, response) {
@@ -115,7 +115,8 @@ function hikingHandler(request, response) {
     key: process.env.TRAIL_API_KEY
   };
 
-  superagent.get(API)
+  superagent
+  .get(API)
   .query(queryObject)
   .then(data => {
     let hikingData = data.body.trails;
@@ -142,7 +143,7 @@ function Hiking(obj) {
 }
 
 
-
+// checks to see if all elements are working correctly
 app.use('*', (request, response) => {
   response.status(404).send('You broke something.. Good job.');
 });
