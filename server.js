@@ -39,10 +39,20 @@ function handleHomePage(request, response) {
 }
 
 function locationHandler(request, response) {
-  if (locations[request.query.city]){
-    response.status(200).send(locations[request.query.city]);
-  } else {locationAPIHandler(request.query.city, response);
-  }
+  // SQL stuff will go here
+  const SQL = 'SELECT * FROM cities WHERE search_query = $1';
+  const city = [request.query.city];
+
+  client.query(SQL, city)
+    .then(result => {
+      if(result.rowCount){
+        console.log('its in the database!');
+        response.status(200).send(result.rows[0]);
+      }
+      else {
+        locationAPIHandler(request.query.city, response);
+      }
+    })
 }
 
 
@@ -52,20 +62,44 @@ function locationAPIHandler(city, response) {
   const API = 'https://us1.locationiq.com/v1/search.php';
 
   let queryObject = {
-    key: process.env.GEOCODE,
+    key: process.env.GEOCODE_API_KEY,
     q: city,
     format: 'json'
   };
-
+  console.log('making an API call');
   superagent.get(API)
     .query(queryObject)
     .then(data => { 
       let locationData = new Location(data.body[0], city);
-      response.status(200).send(locationData);
+      // locations[city] = locationData;
+      cacheLocation(city, data.body)
+        .then(potato => {
+          response.status(200).send(potato);
+        })
     })
-    .catch( function(){
+    .catch( function(error){
+      console.log(error);
       response.status(500).send('Something went wrong with Location Data')
     })
+}
+
+function cacheLocation(city, data){
+  // It's going to write to the database
+  const location = new Location(data[0]);
+  const values = [city, location.formatted_query, location.latitude, location.longitude];
+  const SQL = `
+    INSERT INTO cities (search_query, formatted_query, latitude, longitude)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *
+  `;
+  return client.query(SQL, values)
+    .then(results => {
+      console.log(results);
+      return results.rows[0]
+    })
+
+
+
 }
 
 function Location(obj, city) {
