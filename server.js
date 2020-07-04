@@ -33,7 +33,7 @@ client.connect()
 
 
 // Memory Cache
-let locations = {};
+// let locations = {};
 
 // Home page
 function handleHomePage(request, response) {
@@ -54,10 +54,12 @@ function locationHandler(request, response) {
         console.log('City is NOT present')
         locationAPIHandler(request.query.city, response);
       }
+
     })
 }
-
-
+/////////////////////////////////Location/////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 
 // location API environment
 function locationAPIHandler(city, response) {
@@ -69,13 +71,14 @@ function locationAPIHandler(city, response) {
     q: city,
     format: 'json'
   };
-  console.log('making an API call');
-  superagent.get(API)
+
+  superagent
+    .get(API)
     .query(queryObject)
     .then(data => {
       let locationData = new Location(data.body[0], city);
       // locations[city] = locationData;
-      cacheLocation(city, data.body)
+      cacheLocation(locationData)
         .then(potato => {
           response.status(200).send(potato);
         })
@@ -108,6 +111,10 @@ function Location(obj, city) {
   this.latitude = obj.lat;
   this.longitude = obj.lon;
 }
+
+///////////////////////WEATHER/////////////////////////////////
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
 
 
 // weather API environment
@@ -162,6 +169,11 @@ function hikingHandler(request, response) {
     })
 }
 
+///////////////////////TRAILS//////////////////////////////////
+///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+
+
 // Trails API environment
 function Hiking(obj) {
   this.name = obj.name;
@@ -181,15 +193,4 @@ function Hiking(obj) {
 app.use('*', (request, response) => {
   response.status(404).send('You broke something.. Good job.');
 });
-
-
-
-
-
-
-
-
-
-
-
 
